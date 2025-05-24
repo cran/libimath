@@ -1,6 +1,6 @@
-fb67cc60591f1fe128d86ff0fe1a0c03 *DESCRIPTION
+f2d1ce1c0d87fabec00183c88dfde2b7 *DESCRIPTION
 c9bb7cf936dab3d0cffab303f5f7a8b5 *LICENSE
-ef36c5bdb5f96568c910fb69a6181c81 *NAMESPACE
+2799ae4adf61d92b7ed851df6a368f26 *NAMESPACE
 fd96c6219058e72db88849cf97ef3b88 *R/api.R
 eeba613a81223aa906e51ba243001dd2 *R/zzz.R
 9fdb80a24097fb40d00716563c0fdc56 *README.md
@@ -44,6 +44,7 @@ a2c882ca49435f951f5cd7afc373d7f0 *inst/include/Imath/ImathVecAlgo.h
 29aa0319cd380c1de71bc70c92d51abe *inst/include/Imath/half.h
 c118e02423cdafb3b12c88a337b97689 *inst/include/Imath/halfFunction.h
 cf35e1e5f78706c498db95c236e0de84 *inst/include/Imath/halfLimits.h
+26d99c5fbf8ea658a40f184de5a7bd58 *man/imath_rotate_point.Rd
 b9560785d36fc1a290b9f38deb521a0f *man/print_imath_version.Rd
 b669dfb7f680f53983f35c6a36907e8a *src/Imath/CMakeLists.txt
 32be0c037b7524e4e806b1b624030bdd *src/Imath/cmake/FindPythonPackage.cmake
@@ -101,10 +102,10 @@ c118e02423cdafb3b12c88a337b97689 *src/Imath/src/Imath/halfFunction.h
 cf35e1e5f78706c498db95c236e0de84 *src/Imath/src/Imath/halfLimits.h
 22de12c6da2801e037d1729b0522ecb6 *src/Imath/src/Imath/toFloat.cpp
 6a8ea87cd1da227dd80a4937e88f0dbf *src/Imath/src/Imath/toFloat.h
-c499f84b5d82f05adc95eee45e543a55 *src/Makevars.in
-d4c19939b00e2397a6dd5306b75383ba *src/Makevars.win.in
+0e0d7fd98763361a6c7359f80b5127f4 *src/Makevars.in
+8a4cbeb170f5d08369f188349e6462d9 *src/Makevars.win.in
 76dabee728b53e582bd28fafe104b655 *src/imath-info.cpp
 8b6b0a0e61f4d2cfbafcff6d1ef6d559 *tools/config.R
 ad3bfc6f968de44bcc136175a267df3e *tools/config/cleanup.R
-b9d42329d6d8d06329c9c1760a12d7c9 *tools/config/configure.R
+d96b7542e8cd1e0c06a34e7a37379dac *tools/config/configure.R
 51886cc76bc094f296c6dc8a900fa23b *tools/fix-line-endings.R
