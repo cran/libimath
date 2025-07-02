@@ -7,38 +7,6 @@
 is_windows = identical(.Platform$OS.type, "windows")
 is_macos = identical(Sys.info()[['sysname']], "Darwin")
 
-CC_RAW = r_cmd_config("CC")
-CXX_RAW = r_cmd_config("CXX")
-
-CC_ARGS = strsplit(CC_RAW, " ")[[1]]
-CXX_ARGS = strsplit(CXX_RAW, " ")[[1]]
-
-uses_ccache = FALSE
-if (grepl("ccache", CC_ARGS[1])) {
-	uses_ccache = TRUE
-	CC = paste(CC_ARGS[-1], collapse = " ")
-} else {
-	CC = CC_ARGS[1]
-}
-
-if (grepl("ccache", CXX_ARGS[1])) {
-	uses_ccache = TRUE
-	CXX = paste(CXX_ARGS[-1], collapse = " ")
-} else {
-	CXX = CXX_ARGS[1]
-}
-
-CC_COMPILER = strsplit(CC, " ")[[1]][1]
-CXX_COMPILER = strsplit(CXX, " ")[[1]][1]
-
-CC_FULL = normalizePath(
-	Sys.which(CC_COMPILER),
-	winslash = "/"
-)
-CXX_FULL = normalizePath(
-	Sys.which(CXX_COMPILER),
-	winslash = "/"
-)
 TARGET_ARCH = Sys.info()[["machine"]]
 PACKAGE_BASE_DIR = normalizePath(getwd(), winslash = "/")
 
@@ -73,8 +41,8 @@ lib_system = ""
 pkgconfig_path = Sys.which("pkg-config")
 
 lib_exists = FALSE
-LIB_INCLUDE_LINE = ""
-LIB_LINK_LINE = ""
+LIB_INCLUDE_ASSIGN = ""
+LIB_LINK_ASSIGN = ""
 
 if (nzchar(pkgconfig_path)) {
 	pc_status = system2(
@@ -88,29 +56,80 @@ if (nzchar(pkgconfig_path)) {
 
 	if (lib_exists) {
 		message(
-			"*** configure: system libImath-3_2 exists, using that for building the library"
+			sprintf(
+				"*** configure: system %s exists, using that for building the library",
+				static_library_name
+			)
+		)
+		quote_paths = function(pkgconfig_output, prefix = "-I") {
+			include_dirs = strsplit(
+				trimws(gsub(prefix, "", pkgconfig_output, fixed = TRUE)),
+				"\\s+"
+			)[[1]]
+
+			if (length(include_dirs) == 0) {
+				return("")
+			}
+			if (length(include_dirs) == 1 && include_dirs == "") {
+				return("")
+			}
+
+			return(
+				paste(
+					paste0(
+						prefix,
+						vapply(
+							include_dirs,
+							shQuote,
+							"character"
+						)
+					),
+					collapse = " "
+				)
+			)
+		}
+
+		lib_include = quote_paths(
+			system2(
+				pkgconfig_path,
+				c("--cflags", package_name),
+				stdout = TRUE
+			),
+			prefix = "-I"
 		)
 
-		lib_include = system2(
-			pkgconfig_path,
-			c("--cflags", package_name),
-			stdout = TRUE
-		)
 		message(
 			sprintf("*** configure: using include path '%s'", lib_include)
 		)
-		lib_link = system2(
-			pkgconfig_path,
-			c("--static", "--libs", package_name),
-			stdout = TRUE
+
+		lib_link = quote_paths(
+			system2(
+				pkgconfig_path,
+				c("--libs-only-L", package_name),
+				stdout = TRUE
+			),
+			prefix = "-L"
 		)
+
 		message(
-			sprintf("*** configure: using link path '%s'", lib_link)
+			sprintf(
+				"*** configure: using link path '%s'",
+				lib_link
+			)
 		)
-		LIB_INCLUDE_LINE = sprintf("LIB_INCLUDE = %s", lib_include)
-		LIB_LINK_LINE = sprintf("LIB_LINK = %s", lib_link)
+		if (nzchar(lib_include)) {
+			LIB_INCLUDE_ASSIGN = sprintf('LIB_INCLUDE = %s', lib_include) #This should already have -I
+		}
+		if (nzchar(lib_link)) {
+			LIB_LINK_ASSIGN = sprintf('LIB_LINK = %s', lib_link) #This should already have -L
+		}
+	} else {
+		message(sprintf("*** %s not found by pkg-config", package_name))
 	}
+} else {
+	message("*** pkg-config not available, skipping to common locations")
 }
+
 
 if (!lib_exists) {
 	fallback_prefixes = c(
@@ -139,8 +158,15 @@ if (!lib_exists) {
 				prefix,
 				"include"
 			)
-			LIB_INCLUDE_LINE = sprintf("LIB_INCLUDE = %s", lib_include)
-			LIB_LINK_LINE = sprintf("LIB_LINK = %s", lib_link)
+			if (nzchar(lib_include)) {
+				LIB_INCLUDE_ASSIGN = sprintf(
+					'LIB_INCLUDE = -I"%s"',
+					lib_include
+				) #This doesn't have -I yet
+			}
+			if (nzchar(lib_link)) {
+				LIB_LINK_ASSIGN = sprintf('LIB_LINK = -L"%s"', lib_link) #This doesn't have -L yet
+			}
 			break
 		}
 	}
@@ -171,11 +197,9 @@ define(
 	PACKAGE_BASE_DIR = PACKAGE_BASE_DIR,
 	TARGET_ARCH = TARGET_ARCH,
 	CMAKE = CMAKE,
-	CC_FULL = CC_FULL,
-	CXX_FULL = CXX_FULL,
 	LIB_EXISTS = as.character(lib_exists),
-	LIB_INCLUDE_LINE = LIB_INCLUDE_LINE,
-	LIB_LINK_LINE = LIB_LINK_LINE
+	LIB_INCLUDE_ASSIGN = LIB_INCLUDE_ASSIGN,
+	LIB_LINK_ASSIGN = LIB_LINK_ASSIGN
 )
 
 # Everything below here is package specific CMake stuff
@@ -186,16 +210,12 @@ if (!dir.exists("src/Imath/build")) {
 file_cache = "src/Imath/build/initial-cache.cmake"
 writeLines(
 	sprintf(
-		r"-{set(CMAKE_C_COMPILER "%s" CACHE FILEPATH "C compiler")
-set(CMAKE_CXX_COMPILER "%s" CACHE FILEPATH "C++ compiler")
-set(CMAKE_C_FLAGS "-g -fPIC -fvisibility=hidden" CACHE STRING "C flags")
+		r"-{set(CMAKE_C_FLAGS "-g -fPIC -fvisibility=hidden" CACHE STRING "C flags")
 set(CMAKE_CXX_FLAGS "%s -g -fPIC -fvisibility=hidden -fvisibility-inlines-hidden" CACHE STRING "C++ flags")
 set(CMAKE_POSITION_INDEPENDENT_CODE ON CACHE BOOL "Position independent code")
 set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type")
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libs")
 set(CMAKE_OSX_ARCHITECTURES "%s" CACHE STRING "Target architecture")}-",
-		CC_FULL,
-		CXX_FULL,
 		clang_flag,
 		TARGET_ARCH
 	),
@@ -240,12 +260,16 @@ cmake_cfg = c(
 setwd(build_dir)
 
 status = system2(CMAKE, cmake_cfg)
-if (status != 0) stop("CMake configure step failed")
+if (status != 0) {
+	stop("CMake configure step failed")
+}
 
 setwd(PACKAGE_BASE_DIR)
 
 lf_ify = function(path) {
-	if (!file.exists(path)) return(invisible())
+	if (!file.exists(path)) {
+		return(invisible())
+	}
 	txt = readLines(path, warn = FALSE) # strips CR automatically
 	writeLines(txt, path, sep = "\n", useBytes = TRUE)
 }
