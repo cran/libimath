@@ -1,4 +1,4 @@
-2ed88a04e99e2a76b4d628c3e448a596 *DESCRIPTION
+50a5c3ebc4d70db292190d73ea8e2e06 *DESCRIPTION
 c9bb7cf936dab3d0cffab303f5f7a8b5 *LICENSE
 2799ae4adf61d92b7ed851df6a368f26 *NAMESPACE
 fd96c6219058e72db88849cf97ef3b88 *R/api.R
@@ -103,7 +103,7 @@ cf35e1e5f78706c498db95c236e0de84 *src/Imath/src/Imath/halfLimits.h
 22de12c6da2801e037d1729b0522ecb6 *src/Imath/src/Imath/toFloat.cpp
 6a8ea87cd1da227dd80a4937e88f0dbf *src/Imath/src/Imath/toFloat.h
 db292c51adc67dffb708414dbb7165cd *src/Makevars.in
-14223d23f8f9d7d87d7b10e13f487fb8 *src/Makevars.win.in
+ef000853a172e9b8e16cfe9169f679d5 *src/Makevars.win.in
 76dabee728b53e582bd28fafe104b655 *src/imath-info.cpp
 8b6b0a0e61f4d2cfbafcff6d1ef6d559 *tools/config.R
 ad3bfc6f968de44bcc136175a267df3e *tools/config/cleanup.R
