@@ -173,15 +173,6 @@ if (!lib_exists) {
 }
 
 
-is_clang = grepl("clang", r_cmd_config("CXX"), fixed = TRUE)
-use_libcpp = is_clang && is_macos
-
-clang_flag = ""
-add_pp = FALSE
-if (is_clang) {
-	clang_flag = if (use_libcpp) "-stdlib=libc++" else ""
-}
-
 if (lib_exists) {
 	lib_dir = substr(strsplit(lib_link, " ")[[1]][1], 3, 500)
 	message(
@@ -203,51 +194,77 @@ define(
 )
 
 # Everything below here is package specific CMake stuff
-if (!dir.exists("src/Imath/build")) {
-	dir.create("src/Imath/build")
+build_dir = file.path(PACKAGE_BASE_DIR, "src/Imath/build-cran")
+if (dir.exists(build_dir)) {
+	unlink(build_dir, recursive = TRUE, force = TRUE)
+}
+dir.create(build_dir, recursive = TRUE, showWarnings = FALSE)
+
+cache_dir = file.path(PACKAGE_BASE_DIR, "src/Imath/build")
+dir.create(cache_dir, recursive = TRUE, showWarnings = FALSE)
+file_cache = file.path(cache_dir, "initial-cache.cmake")
+
+cache_lines = c(
+	'set(CMAKE_C_FLAGS "-g -fPIC -fvisibility=hidden" CACHE STRING "C flags")',
+	'set(CMAKE_CXX_FLAGS "-g -fPIC -fvisibility=hidden -fvisibility-inlines-hidden" CACHE STRING "C++ flags")',
+	'set(CMAKE_POSITION_INDEPENDENT_CODE ON CACHE BOOL "Position independent code")',
+	'set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type")',
+	'set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libs")'
+)
+if (is_macos) {
+	cache_lines = c(
+		cache_lines,
+		sprintf(
+			'set(CMAKE_OSX_ARCHITECTURES "%s" CACHE STRING "Target architecture")',
+			TARGET_ARCH
+		)
+	)
+}
+writeLines(cache_lines, file_cache)
+
+read_config_value = function(key) {
+	value = r_cmd_config(key)
+	if (is.null(value)) {
+		return("")
+	}
+	trimws(paste(value, collapse = " "))
 }
 
-file_cache = "src/Imath/build/initial-cache.cmake"
-writeLines(
-	sprintf(
-		r"-{set(CMAKE_C_FLAGS "-g -fPIC -fvisibility=hidden" CACHE STRING "C flags")
-set(CMAKE_CXX_FLAGS "%s -g -fPIC -fvisibility=hidden -fvisibility-inlines-hidden" CACHE STRING "C++ flags")
-set(CMAKE_POSITION_INDEPENDENT_CODE ON CACHE BOOL "Position independent code")
-set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type")
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libs")
-set(CMAKE_OSX_ARCHITECTURES "%s" CACHE STRING "Target architecture")}-",
-		clang_flag,
-		TARGET_ARCH
-	),
-	file_cache
-)
+first_non_empty = function(values) {
+	values = trimws(values)
+	values = values[nzchar(values)]
+	if (length(values) == 0) {
+		return("")
+	}
+	values[[1]]
+}
 
+cc_cmd = first_non_empty(c(
+	Sys.getenv("CC", unset = ""),
+	read_config_value("CC")
+))
 
-inst_dir = file.path(PACKAGE_BASE_DIR, "inst") # ${PACKAGE_BASE_DIR}/inst
+cxx_cmd = first_non_empty(c(
+	Sys.getenv("CXX20", unset = ""),
+	Sys.getenv("CXX17", unset = ""),
+	Sys.getenv("CXX14", unset = ""),
+	Sys.getenv("CXX11", unset = ""),
+	Sys.getenv("CXX", unset = ""),
+	read_config_value("CXX20"),
+	read_config_value("CXX17"),
+	read_config_value("CXX14"),
+	read_config_value("CXX11"),
+	read_config_value("CXX")
+))
+
+inst_dir = file.path(PACKAGE_BASE_DIR, "inst")
 dir.create(inst_dir, recursive = TRUE, showWarnings = FALSE)
 
-include_dir = file.path(inst_dir, "include")
-if (!dir.exists(include_dir)) {
-	dir.create(include_dir)
-}
-lib_dir = file.path(inst_dir, "lib")
-if (!dir.exists(lib_dir)) {
-	dir.create(lib_dir)
-}
-lib_arch = file.path(lib_dir, TARGET_ARCH)
-
-if (!dir.exists(lib_arch)) {
-	dir.create(lib_arch)
-}
-
-build_dir = file.path(PACKAGE_BASE_DIR, "src/Imath/build") # already created earlier
-src_dir = ".." # evaluated inside build/
-
 cmake_cfg = c(
-	src_dir,
+	"..",
 	"-C",
-	"../build/initial-cache.cmake",
-	"-DCMAKE_INSTALL_PREFIX=\"../../../inst\"",
+	file_cache,
+	paste0("-DCMAKE_INSTALL_PREFIX=", inst_dir),
 	paste0("-DCMAKE_INSTALL_LIBDIR=lib/", TARGET_ARCH),
 	"-DCMAKE_INSTALL_INCLUDEDIR=include",
 	"-DIMATH_INSTALL_PKG_CONFIG=ON",
@@ -257,9 +274,20 @@ cmake_cfg = c(
 	"-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
 )
 
-setwd(build_dir)
+cmake_env = character()
+if (nzchar(cc_cmd)) {
+	cmake_env = c(cmake_env, paste0("CC=", shQuote(cc_cmd)))
+	message(sprintf("*** configure: CMake CC='%s'", cc_cmd))
+}
+if (nzchar(cxx_cmd)) {
+	cmake_env = c(cmake_env, paste0("CXX=", shQuote(cxx_cmd)))
+	message(sprintf("*** configure: CMake CXX='%s'", cxx_cmd))
+}
 
-status = system2(CMAKE, cmake_cfg)
+oldwd = getwd()
+setwd(build_dir)
+status = system2(CMAKE, cmake_cfg, env = cmake_env)
+setwd(oldwd)
 if (status != 0) {
 	stop("CMake configure step failed")
 }
