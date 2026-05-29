@@ -1,4 +1,4 @@
-7b5a03ff26a642ab74e5d167c073ea8d *DESCRIPTION
+372dc77a48a20c068176de59e98c0cd8 *DESCRIPTION
 c9bb7cf936dab3d0cffab303f5f7a8b5 *LICENSE
 2799ae4adf61d92b7ed851df6a368f26 *NAMESPACE
 fd96c6219058e72db88849cf97ef3b88 *R/api.R
@@ -101,10 +101,11 @@ c118e02423cdafb3b12c88a337b97689 *src/Imath/src/Imath/halfFunction.h
 cf35e1e5f78706c498db95c236e0de84 *src/Imath/src/Imath/halfLimits.h
 22de12c6da2801e037d1729b0522ecb6 *src/Imath/src/Imath/toFloat.cpp
 6a8ea87cd1da227dd80a4937e88f0dbf *src/Imath/src/Imath/toFloat.h
-6732fbca36cbafc831a3f92ca8a6cff5 *src/Makevars.in
-fd39aa2dbc5bd6a86f9e0c117788c174 *src/Makevars.win.in
+adae21ee99cb192b49b8eaba508e06c8 *src/Makevars.in
+cd536f840ad74ef14cd664c05f956787 *src/Makevars.win.in
 76dabee728b53e582bd28fafe104b655 *src/imath-info.cpp
-054bb9a077307790a7cd335dfd32a9df *tools/config.R
+c2a04a5bd177a2faef258f3886d31e5f *tools/config.R
 ad3bfc6f968de44bcc136175a267df3e *tools/config/cleanup.R
-28da66750f996ce8c13e7ccee35d9f85 *tools/config/configure.R
+c394e1c1c97d745bc8c59f4dd0b2da71 *tools/config/configure.R
 51886cc76bc094f296c6dc8a900fa23b *tools/fix-line-endings.R
+7cdc8a79def54afb31af1ccfd690fd09 *tools/write-runtime-metadata.R

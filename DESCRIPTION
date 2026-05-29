@@ -1,7 +1,7 @@
 Package: libimath
 Type: Package
 Title: 'Imath' Computer Graphics Linear Algebra Static Library
-Version: 3.2.2-0
+Version: 3.2.2-1
 Authors@R: c(
     person(
       "Tyler", "Morgan-Wall",
@@ -66,10 +66,10 @@ License: BSD_3_clause + file LICENSE
 SystemRequirements: GNU Make, cmake
 Encoding: UTF-8
 Config/build/compilation-database: true
-RoxygenNote: 7.3.2
 Biarch: TRUE
+Config/roxygen2/version: 8.0.0
 NeedsCompilation: yes
-Packaged: 2026-02-22 03:16:14 UTC; tyler
+Packaged: 2026-05-29 12:43:01 UTC; tyler
 Author: Tyler Morgan-Wall [aut, cre] (ORCID:
     <https://orcid.org/0000-0002-3131-3814>),
   Andrew Kunz [ctb, cph],
@@ -122,4 +122,4 @@ Author: Tyler Morgan-Wall [aut, cre] (ORCID:
   Kevin Ushey [cph]
 Maintainer: Tyler Morgan-Wall <tylermw@gmail.com>
 Repository: CRAN
-Date/Publication: 2026-02-22 10:20:02 UTC
+Date/Publication: 2026-05-29 17:00:09 UTC
